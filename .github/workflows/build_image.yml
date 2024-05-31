@@ -35,6 +35,6 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            lelabquantique/scrape_jobs:latest
-            lelabquantique/scrape_jobs:${{ steps.version.outputs.VERSION }}
+            latest
+            ${{ steps.version.outputs.VERSION }}
           labels: ${{ steps.meta.outputs.labels }}
