@@ -10,3 +10,9 @@ class PostJobToLLQException(Exception):
     """
     Raise when we cannot post a job in LLQ website via REST API
     """
+
+
+class GetJobsFromGraphQLException(Exception):
+    """
+    Raise when we cannot grab the jobs from GQL API in LLQ website
+    """

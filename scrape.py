@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from typing import List, Optional
 import re
 from lib.send_job_to_llq import post_with_token, Job
+from lib.get_jobs_title import get_titles
 
 
 @dataclass
@@ -41,6 +42,9 @@ def parse_rss_feed(xml_content: bytes) -> List[JobItem]:
             continue
 
         title = item.find("title").text if item.find("title") else ""
+        if title in get_titles():
+            continue
+
         company = item.find("company").text if item.find("company") else ""
         description = item.find("description").text if item.find("description") else ""
         location = item.find("location").text if item.find("location") else ""
