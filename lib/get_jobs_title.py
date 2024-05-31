@@ -1,18 +1,22 @@
 import requests
-from exceptions import GetJobsFromGraphQLException
-from utils import base_url
+from .exceptions import GetJobsFromGraphQLException
+from .utils import base_url
+import logging
+import re
 
 GET_JOB_TITLES = """
-    query ($last: Int) {
-      jobs(last: $last) {
+    query ($first: Int) {
+      jobs(first: $first) {
         nodes {
-          jobTitle
+          jobs {
+            jobTitle
+          }
         }
       }
     }
 """
 
-variables = {"last": 50}
+variables = {"first": 120}
 
 
 def get_titles() -> list[str]:
@@ -25,9 +29,14 @@ def get_titles() -> list[str]:
 
     if response.status_code in [200, 201]:
         data = response.json()
-
-        return [job["jobTitle"] for job in data["data"]["jobs"]["nodes"]]
+        return [
+            re.sub(r"[^A-Za-z0-9\s]", "", job["jobs"]["jobTitle"])
+            for job in data["data"]["jobs"]["nodes"]
+        ]
     else:
+        logging.error(
+            f"Error in jobsTitle query : \n variables : {variables} \n headers : {headers}"
+        )
         raise GetJobsFromGraphQLException(
             f"Error in jobsTitle query : \n variables : {variables} \n headers : {headers}"
         )

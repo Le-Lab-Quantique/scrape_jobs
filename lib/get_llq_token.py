@@ -3,6 +3,7 @@ import requests
 from .exceptions import NoLLQJWTTokenException
 from .utils import base_url
 import sys
+import logging
 
 BearerToken = NewType("BearerToken", str)
 
@@ -26,6 +27,9 @@ def get_token() -> BearerToken:
         return BearerToken(f"Bearer {token}")
     else:
         username = _get_credentials()["username"]
+        logging.error(
+            f"Failed to get LLQ JWT Token for {username}. \nStatus code : {response.status_code} {_get_credentials()} {response.json()}"
+        )
         raise NoLLQJWTTokenException(
             f"Failed to get LLQ JWT Token for {username}. \nStatus code : {response.status_code} {_get_credentials()} {response.json()}"
         )

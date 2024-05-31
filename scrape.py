@@ -5,6 +5,9 @@ from typing import List, Optional
 import re
 from lib.send_job_to_llq import post_with_token, Job
 from lib.get_jobs_title import get_titles
+import logging
+import sys
+import re
 
 
 @dataclass
@@ -19,7 +22,7 @@ class JobItem:
     image_url: Optional[str]
 
 
-AQORA_JB_RSS_URL = "https://jobs.aqora.io/rss/jobs"
+AQORA_JB_RSS_URL = "https://quantum.jobs/rss/jobs"
 
 
 def fetch_rss_feed(url: str) -> Optional[bytes]:
@@ -36,13 +39,18 @@ def parse_rss_feed(xml_content: bytes) -> List[JobItem]:
     soup = BeautifulSoup(xml_content, "xml")
     items = soup.find_all("item")
     job_items = []
+    existing_job_title = get_titles()[::-1]
 
+    counter = 0
     for item in items:
+        counter += 1
         if re.search(r"Le Lab Quantique", item.get_text(), re.IGNORECASE):
             continue
 
         title = item.find("title").text if item.find("title") else ""
-        if title in get_titles():
+        original_title = title.split(" at ")[0].rstrip()
+        formatted_title = re.sub(r"[^A-Za-z0-9\s]", "", original_title)
+        if formatted_title in existing_job_title:
             continue
 
         company = item.find("company").text if item.find("company") else ""
@@ -54,7 +62,7 @@ def parse_rss_feed(xml_content: bytes) -> List[JobItem]:
         image_url = item.find("image").text if item.find("image") else None
 
         job_item = JobItem(
-            title=title,
+            title=original_title,
             company=company,
             description=description,
             location=location,
@@ -65,11 +73,13 @@ def parse_rss_feed(xml_content: bytes) -> List[JobItem]:
         )
 
         job_items.append(job_item)
-
+    logging.info(f"{counter} total jobs found.")
     return job_items
 
 
 def main():
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    logging.info("Starting scrap")
     xml_content = fetch_rss_feed(AQORA_JB_RSS_URL)
     if xml_content:
         job_items = parse_rss_feed(xml_content)
@@ -84,10 +94,10 @@ def main():
                 job_compagny_name_=job.company,
                 job_apply_link=job.link,
             )
-            res = post_with_token(
-                "/wp-json/wp/v2/job", mapped_job, job.guid, job.pub_date
-            )
-            print(res)
+            post_with_token("/wp-json/wp/v2/job", mapped_job, job.guid, job.pub_date)
+        logging.info(f"{len(job_items)} jobs pull from {AQORA_JB_RSS_URL} !")
+    else:
+        logging.warning(f"No content found in {AQORA_JB_RSS_URL}")
 
 
 if __name__ == "__main__":

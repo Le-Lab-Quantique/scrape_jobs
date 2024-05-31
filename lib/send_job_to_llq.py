@@ -4,6 +4,7 @@ from .get_llq_token import get_token
 from .exceptions import PostJobToLLQException
 from dataclasses import asdict, dataclass
 from typing import Optional
+import logging
 
 
 @dataclass
@@ -38,6 +39,9 @@ def post_with_token(endpoint: str, job: Job, slug: str, publish_date: str) -> di
     if response.status_code in [200, 201]:
         return response.json()
     else:
+        logging.error(
+            f"Failed to post data. Status code: {response.status_code}, Response: {response.text}"
+        )
         raise PostJobToLLQException(
             f"Failed to post data. Status code: {response.status_code}, Response: {response.text}"
         )
