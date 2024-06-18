@@ -24,7 +24,7 @@ class Job:
 def post_with_token(endpoint: str, job: Job, slug: str, publish_date: str) -> dict:
     data = {
         "title": job.job_title_,
-        "status": WordPressPostStatus.DRAFT,
+        "status": WordPressPostStatus.PUBLISHED,
         "slug": slug,
         "date": publish_date,
         "acf": asdict(job),
